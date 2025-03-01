@@ -2,6 +2,7 @@ package com.example.EmployeePayrollApp.service;
 
 import com.example.EmployeePayrollApp.dto.EmployeeDTO;
 import com.example.EmployeePayrollApp.entity.Employee;
+import com.example.EmployeePayrollApp.exception.EmployeeNotFoundException;
 import com.example.EmployeePayrollApp.repository.EmployeeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -49,8 +50,14 @@ public class EmployeeService {
     // Get Employee by ID
     public Optional<EmployeeDTO> getEmployeeById(Long id) {
         log.info("Fetching employee with ID: {}", id);
-        return employeeRepository.findById(id)
-                .map(this::mapToDTO);
+
+        Optional<Employee> employee = employeeRepository.findById(id);
+
+        if (employee.isEmpty()) {
+            throw new EmployeeNotFoundException("Employee with ID " + id + " not found");
+        }
+
+        return employee.map(this::mapToDTO);
     }
 
     @Transactional
@@ -89,7 +96,7 @@ public class EmployeeService {
             return true;
         } else {
             log.warn("Delete failed. Employee with ID {} not found", id);
-            return false;
+            throw new EmployeeNotFoundException("Employee with ID " + id + " not found");
         }
     }
 

@@ -25,4 +25,6 @@ public class GlobalExceptionHandler {
         //Return structured error response
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
     }
+
+
 }
