@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Slf4j  // Enables logging
+@Slf4j  //Enables logging
 @Service
 public class EmployeeService {
 
@@ -20,7 +20,7 @@ public class EmployeeService {
         this.employeeRepository = employeeRepository;
     }
 
-    // Convert DTO to Entity
+    //Convert DTO to Entity
     private Employee mapToEntity(EmployeeDTO dto) {
         return new Employee(null, dto.getName(), dto.getSalary());
     }
