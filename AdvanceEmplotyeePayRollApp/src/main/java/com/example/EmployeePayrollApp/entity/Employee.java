@@ -12,7 +12,7 @@ import lombok.*;
 public class Employee {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // Ensure ID is auto-generated
     private Long id;
 
     @Column(nullable = false)
@@ -20,4 +20,10 @@ public class Employee {
 
     @Column(nullable = false)
     private double salary;
+
+    // Version field for optimistic locking
+//    @Version
+//    private Integer version;
+
+
 }

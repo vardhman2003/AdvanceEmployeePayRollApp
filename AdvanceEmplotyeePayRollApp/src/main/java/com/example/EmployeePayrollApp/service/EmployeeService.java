@@ -4,33 +4,36 @@ import com.example.EmployeePayrollApp.dto.EmployeeDTO;
 import com.example.EmployeePayrollApp.entity.Employee;
 import com.example.EmployeePayrollApp.repository.EmployeeRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Slf4j  //Enables logging
+@Slf4j
 @Service
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
+    private final ModelMapper modelMapper;
 
-    public EmployeeService(EmployeeRepository employeeRepository) {
+    public EmployeeService(EmployeeRepository employeeRepository, ModelMapper modelMapper) {
         this.employeeRepository = employeeRepository;
+        this.modelMapper = modelMapper;
     }
 
-    //Convert DTO to Entity
-    private Employee mapToEntity(EmployeeDTO dto) {
-        return new Employee(null, dto.getName(), dto.getSalary());
+    // Convert DTO to Entity using ModelMapper
+    public Employee mapToEntity(EmployeeDTO dto) {
+        return modelMapper.map(dto, Employee.class);
     }
 
-    //Convert Entity to DTO
-    private EmployeeDTO mapToDTO(Employee employee) {
-        return new EmployeeDTO(employee.getId(),employee.getName(), employee.getSalary());
+    // Convert Entity to DTO using ModelMapper
+    public EmployeeDTO mapToDTO(Employee employee) {
+        return modelMapper.map(employee, EmployeeDTO.class);
     }
 
-    //Get all Employees
+    // Get all Employees
     public List<EmployeeDTO> getAllEmployees() {
         log.info("Fetching all employees from database");
         List<EmployeeDTO> employees = employeeRepository.findAll().stream()
@@ -41,51 +44,48 @@ public class EmployeeService {
     }
 
     // Get Employee by ID
-    public Optional<Employee> getEmployeeById(Long id) {
+    public Optional<EmployeeDTO> getEmployeeById(Long id) {
         log.info("Fetching employee with ID: {}", id);
-        Optional<Employee> employee = employeeRepository.findById(id);
-        if (employee.isPresent()) {
-            log.info("Employee found: {}", employee.get());
-        } else {
-            log.warn("Employee with ID {} not found", id);
-        }
-        return employee;
+        return employeeRepository.findById(id)
+                .map(this::mapToDTO);
     }
 
-    // Create Employee (same as save)
-    public Employee createEmployee(Employee employee) {
-        log.info("Creating new employee: {}", employee);
+    public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
+        Employee employee = new Employee();
+        employee.setName(employeeDTO.getName());
+        employee.setSalary(employeeDTO.getSalary());
+
         Employee savedEmployee = employeeRepository.save(employee);
-        log.info("Employee created successfully with ID: {}", savedEmployee.getId());
-        return savedEmployee;
+
+        // Return DTO with ID
+        return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getName(), savedEmployee.getSalary());
     }
 
     // Update Employee
-    public Employee updateEmployee(Long id, Employee updatedEmployee) {
+    public EmployeeDTO updateEmployee(Long id, EmployeeDTO updatedEmployeeDTO) {
         log.info("Updating employee with ID: {}", id);
         return employeeRepository.findById(id)
-                .map(employee -> {
-                    employee.setName(updatedEmployee.getName());
-                    employee.setSalary(updatedEmployee.getSalary());
-                    Employee savedEmployee = employeeRepository.save(employee);
+                .map(existingEmployee -> {
+                    modelMapper.map(updatedEmployeeDTO, existingEmployee); // Efficient update
+                    Employee savedEmployee = employeeRepository.save(existingEmployee);
                     log.info("Employee with ID {} updated successfully", id);
-                    return savedEmployee;
+                    return mapToDTO(savedEmployee);
                 })
                 .orElseThrow(() -> {
-                    log.error("Employee with ID {} not found for update", id);
+                    log.error("Failed to update. Employee with ID {} not found", id);
                     return new RuntimeException("Employee not found with id: " + id);
                 });
     }
 
     // Delete Employee
     public boolean deleteEmployee(Long id) {
-        log.info("Received request to delete employee with ID: {}", id);
         if (employeeRepository.existsById(id)) {
+            log.info("Deleting employee with ID: {}", id);
             employeeRepository.deleteById(id);
             log.info("Employee with ID {} deleted successfully", id);
             return true;
         } else {
-            log.warn("Employee with ID {} not found for deletion", id);
+            log.warn("Delete failed. Employee with ID {} not found", id);
             return false;
         }
     }
