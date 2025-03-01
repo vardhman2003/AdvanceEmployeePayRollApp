@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Payroll</title>
+</head>
+<body>
+<h1>Employee Payroll</h1>
+
+<div>
+    <h2>Create Employee</h2>
+    <form id="createForm">
+        Name: <input type="text" id="name"><br>
+        Position: <input type="text" id="position"><br>
+        Salary: <input type="number" id="salary"><br>
+        <button type="submit">Create Employee</button>
+    </form>
+</div>
+
+<div>
+    <h2>Employee List</h2>
+    <button id="fetchEmployees">Fetch Employees</button>
+    <ul id="employeeList">
+        <li th:each="employee : ${employees}">
+            <span th:text="${employee.name}"></span> -
+            <span th:text="${employee.position}"></span> -
+            <span th:text="' $' + ${employee.salary}"></span>
+        </li>
+    </ul>
+</div>
+
+<script>
+    const baseUrl = "http://localhost:8080/api/employees";  // Correct Spring Boot URL
+
+    // Fetch Employees (for non-Thymeleaf real-time updates)
+    document.getElementById("fetchEmployees").addEventListener("click", async () => {
+        const response = await fetch(baseUrl);
+        const employees = await response.json();
+        const employeeList = document.getElementById("employeeList");
+        employeeList.innerHTML = '';  // Clear existing list
+        employees.forEach(employee => {
+            const li = document.createElement("li");
+            li.textContent = `${employee.name} (${employee.position}) - $${employee.salary}`;
+            employeeList.appendChild(li);
+        });
+    });
+
+    // Create Employee
+    document.getElementById("createForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const name = document.getElementById("name").value;
+        const position = document.getElementById("position").value;
+        const salary = document.getElementById("salary").value;
+
+        const newEmployee = { name, position, salary: parseFloat(salary) };
+
+        const response = await fetch(baseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newEmployee)
+        });
+
+        if (response.ok) {
+            alert("Employee created successfully!");
+            document.getElementById("createForm").reset();
+            document.getElementById("fetchEmployees").click(); // Refresh list
+        } else {
+            alert("Failed to create employee.");
+        }
+    });
+</script>
+</body>
+</html>
