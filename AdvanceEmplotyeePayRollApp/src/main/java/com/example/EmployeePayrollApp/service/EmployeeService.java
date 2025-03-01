@@ -18,12 +18,12 @@ public class EmployeeService {
         this.employeeRepository = employeeRepository;
     }
 
-    // Convert DTO to Entity
+    //Convert DTO to Entity
     private Employee mapToEntity(EmployeeDTO dto) {
         return new Employee(null, dto.getName(), dto.getSalary());
     }
 
-    // Convert Entity to DTO
+    //Convert Entity to DTO
     private EmployeeDTO mapToDTO(Employee employee) {
         return new EmployeeDTO(employee.getName(), employee.getSalary());
     }
@@ -46,7 +46,7 @@ public class EmployeeService {
         return employeeRepository.save(employee);
     }
 
-    // Update Employee
+    //Update Employee
     public Employee updateEmployee(Long id, Employee updatedEmployee) {
         return employeeRepository.findById(id)
                 .map(employee -> {
@@ -57,7 +57,7 @@ public class EmployeeService {
                 .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
     }
 
-    // Delete Employee
+    //Delete Employee
     public boolean deleteEmployee(Long id) {
         if (employeeRepository.existsById(id)) {
             employeeRepository.deleteById(id);
@@ -66,7 +66,7 @@ public class EmployeeService {
         return false;
     }
 
-    // Save Employee
+    //Save Employee
     public EmployeeDTO saveEmployee(EmployeeDTO employeeDTO) {
         Employee employee = employeeRepository.save(mapToEntity(employeeDTO));
         return mapToDTO(employee);
