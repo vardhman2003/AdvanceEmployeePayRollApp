@@ -2,9 +2,12 @@ package com.example.EmployeePayrollApp.controller;
 
 import com.example.EmployeePayrollApp.dto.EmployeeDTO;
 import com.example.EmployeePayrollApp.service.EmployeeService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,12 +22,16 @@ public class EmployeeController {
     public EmployeeController(EmployeeService employeeService) {
         this.employeeService = employeeService;
     }
+
+   //post mapping
     @PostMapping
-    public ResponseEntity<EmployeeDTO> createEmployee(@RequestBody EmployeeDTO employeeDTO) {
+    public ResponseEntity<EmployeeDTO> createEmployee(@Valid @RequestBody EmployeeDTO employeeDTO) {
         log.info("Received request to create employee: {}", employeeDTO);
+
         EmployeeDTO savedEmployee = employeeService.createEmployee(employeeDTO);
+
         log.info("Employee created successfully with ID {}: {}", savedEmployee.getId(), savedEmployee);
-        return ResponseEntity.ok(savedEmployee);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedEmployee);
     }
 
     // Get All Employees
@@ -51,19 +58,27 @@ public class EmployeeController {
         }
     }
 
-    // Update Employee
     @PutMapping("/{id}")
-    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable Long id, @RequestBody EmployeeDTO employeeDTO) {
+    public ResponseEntity<EmployeeDTO> updateEmployee(@PathVariable Long id, @Valid @RequestBody EmployeeDTO employeeDTO) {
         log.info("Updating employee with ID: {}", id);
+
         try {
             EmployeeDTO updatedEmployee = employeeService.updateEmployee(id, employeeDTO);
+
             log.info("Employee with ID {} updated successfully", id);
             return ResponseEntity.ok(updatedEmployee);
-        } catch (RuntimeException e) {
-            log.error("Failed to update. Employee with ID {} not found", id);
-            return ResponseEntity.notFound().build();
+
+        } catch (ResponseStatusException e) {
+            log.error("Failed to update. Employee with ID {} not found: {}", id, e.getMessage());
+            return ResponseEntity.status(e.getStatusCode()).body(null);
+
+        } catch (Exception e) {
+            log.error("Unexpected error while updating employee with ID {}: {}", id, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
+
 
     // Delete Employee
     @DeleteMapping("/{id}")

@@ -21,6 +21,10 @@ public class Employee {
     @Column(nullable = false)
     private double salary;
 
+    @Column(nullable = false)
+    private String roll;
+
+
     // Version field for optimistic locking
 //    @Version
 //    private Integer version;

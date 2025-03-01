@@ -5,7 +5,10 @@ import com.example.EmployeePayrollApp.entity.Employee;
 import com.example.EmployeePayrollApp.repository.EmployeeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,31 +53,31 @@ public class EmployeeService {
                 .map(this::mapToDTO);
     }
 
+    @Transactional
     public EmployeeDTO createEmployee(EmployeeDTO employeeDTO) {
-        Employee employee = new Employee();
-        employee.setName(employeeDTO.getName());
-        employee.setSalary(employeeDTO.getSalary());
-
-        Employee savedEmployee = employeeRepository.save(employee);
-
-        // Return DTO with ID
-        return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getName(), savedEmployee.getSalary());
+        Employee savedEmployee = employeeRepository.save(new Employee(
+                null,  //Ensuring ID is null so Hibernate treats it as a new entity
+                employeeDTO.getName(),
+                employeeDTO.getSalary(),
+                employeeDTO.getRoll()
+        ));
+        return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getName(), savedEmployee.getSalary(),savedEmployee.getRoll());
     }
 
-    // Update Employee
-    public EmployeeDTO updateEmployee(Long id, EmployeeDTO updatedEmployeeDTO) {
-        log.info("Updating employee with ID: {}", id);
-        return employeeRepository.findById(id)
-                .map(existingEmployee -> {
-                    modelMapper.map(updatedEmployeeDTO, existingEmployee); // Efficient update
-                    Employee savedEmployee = employeeRepository.save(existingEmployee);
-                    log.info("Employee with ID {} updated successfully", id);
-                    return mapToDTO(savedEmployee);
-                })
-                .orElseThrow(() -> {
-                    log.error("Failed to update. Employee with ID {} not found", id);
-                    return new RuntimeException("Employee not found with id: " + id);
-                });
+    //update data
+    public EmployeeDTO updateEmployee(Long id, EmployeeDTO employeeDTO) {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee with ID " + id + " not found"));
+
+        // Update existing employee fields (DO NOT create a new object)
+        employee.setName(employeeDTO.getName());
+        employee.setRoll(employeeDTO.getRoll());
+        employee.setSalary(employeeDTO.getSalary());
+
+        // Save updated entity
+        Employee savedEmployee = employeeRepository.save(employee);
+
+        return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getName(), savedEmployee.getSalary(),savedEmployee.getRoll() );
     }
 
     // Delete Employee
