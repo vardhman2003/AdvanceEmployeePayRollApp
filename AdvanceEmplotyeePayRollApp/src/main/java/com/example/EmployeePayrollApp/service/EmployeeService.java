@@ -65,4 +65,10 @@ public class EmployeeService {
         }
         return false;
     }
+
+    // Save Employee
+    public EmployeeDTO saveEmployee(EmployeeDTO employeeDTO) {
+        Employee employee = employeeRepository.save(mapToEntity(employeeDTO));
+        return mapToDTO(employee);
+    }
 }
